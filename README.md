@@ -38,6 +38,8 @@ We also try to limit the usage state. Page views must be stateless and we sepera
         - ...
     - pages
         - home
+            - flows
+                - create_something_flow.dart
             - view_model
                 - home_state.dart
                 - home_view_model.dart
@@ -138,15 +140,18 @@ class CounterState {
 
 ### View Model
 
-The View Model in `<page>`_view_model.dart is a dart class with a **Riverpod annotation**, using the view model state.
+The View Model in `<page>`_view_model.dart is a dart class extending StateNotifier with a auto dispose StateNotifierProvider, using the view model state.
 
 **Example:**
 
 ```dart
-@riverpod
-class CounterViewModel extends _$CounterViewModel {
-  @override
-  CounterState build() => CounterState.initial();
+final counterViewModelProvider = StateNotifierProvider.autoDispose(
+	(ref) => CounterViewModel(CounterState.initial()),
+);
+
+class CounterViewModel extends StateNotifier<CounterState> {
+
+	CounterViewModel(super.state);
 
   void increment() {
     state = state.copyWith(count: state.count + 1);
@@ -252,6 +257,13 @@ Reusable widgets under the `widgets` directory:
 - Can be stateful but s**hould** avoid own states and instead pass callbacks and states up to the view model
 - **Should** avoid dependencies to Riverpod
 
+<aside>
+💡
+
+Flows which contain the `BuildContext` (usually showing a dialog or multiple in a row) **must not** be part of the View Model, but become their own flow under `/lib/pages/<pagename>/flows/` !
+
+</aside>
+
 ## Reusable Widgets
 
 Reusable widgets under the universal `widgets` directory:
@@ -264,17 +276,14 @@ Reusable widgets under the universal `widgets` directory:
 
 Services are holding the app logic and necessary app state. Services **must** be scoped under topics and can contain different types: Services, Flows, Providers.
 
-Services must be suffixed with `_service.dart`  and are dart classes with a Riverpod annotation, similar to view models. But their scope is not bound to a specific page.
+Services must be suffixed with `_service.dart`  and are dart classes with a Riverpod provider, similar to view models. But their scope is not bound to a specific page.
 
 Additionally a service topic can also contain small providers.
 
 Example service  `counter_service.dart`:
 
 ```dart
-@riverpod
-CounterService counterService(CounterServiceRef ref) {
-  return CounterService();
-}
+final counterServiceProvider = Provider((ref) => CounterService());
 
 class CounterService {
   CounterData _data = CounterData.initial;
