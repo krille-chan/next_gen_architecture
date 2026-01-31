@@ -1,19 +1,19 @@
 # Frontend Architecture: Flutter App
 
-The goal is to have a maintainable MVVM architecture which is:
+Our goal is to create a maintainable MVVM architecture that is:
 
 - easy to understand
 - expandable
 - easy to downscale
 - intuitive
 - testable
-- does not require much knowledge of a specific state solution (Riverpod, BloC)
+- accessible without deep knowledge of specific state solutions (Riverpod, BloC)
 
-We want to limit the dependencies to Riverpod where possible, while making use of the strengthes. The goal is **low coupling and high cohesion**.
+We aim to minimize dependencies on Riverpod while leveraging its strengths. The goal is **low coupling and high cohesion**.
 
-To achieve this we are using basic Dart classes, Dart functions and basic Flutter Widgets where possible. ViewModels and Services are basic Dart classes with `@riverpod` annotation. Flows are just dart functions. We prohibit dependencies to Riverpod where possible.
+To achieve this, we use basic Dart classes, Dart functions, and basic Flutter Widgets wherever possible. ViewModels and Services are basic Dart classes with Riverpod providers. Flows are simple Dart functions. We avoid Riverpod dependencies where possible.
 
-We also try to limit the usage state. Page views must be stateless and we seperate the state from the view models. This intentionally adds some overhead and makes changes to the app state less convenient to enforce a very careful look on those.
+We also minimize state usage. Page views must be stateless, and we separate state from view models. This intentionally adds overhead and makes app state changes less convenient to enforce careful consideration of each change.
 
 ## Directory structure
 
@@ -48,6 +48,7 @@ We also try to limit the usage state. Page views must be stateless and we sepera
             - home_page.dart
         - login
         - settings
+    
     - services
         - matrix
             - flows
@@ -111,12 +112,6 @@ class CounterState {
     this.error,
   });
 
-  factory CounterState.initial() => const CounterState(
-        count: 0,
-        isLoading: false,
-        error: null,
-      );
-
   CounterState copyWith({
     int? count,
     bool? isLoading,
@@ -145,13 +140,17 @@ The View Model in `<page>`_view_model.dart is a dart class extending StateNotifi
 **Example:**
 
 ```dart
-final counterViewModelProvider = StateNotifierProvider.autoDispose(
-	(ref) => CounterViewModel(CounterState.initial()),
+final counterViewModelProvider = NotifierProvider.autoDispose(
+	CounterViewModel.new
 );
 
-class CounterViewModel extends StateNotifier<CounterState> {
-
-	CounterViewModel(super.state);
+class CounterViewModel extends Notifier<CounterState> {
+	@override
+	CounterState build() = CounterState(
+    count: 0,
+    isLoading: false,
+    error: null,
+  );
 
   void increment() {
     state = state.copyWith(count: state.count + 1);
@@ -177,6 +176,13 @@ class CounterViewModel extends StateNotifier<CounterState> {
 ```
 
 A page **can** have **multiple** view models or additional small providers if needed.
+
+<aside>
+💡
+
+View Models **must not** have dependencies to Flutter! They must be independent from the UI.
+
+</aside>
 
 ### UI & Widgets
 
