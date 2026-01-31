@@ -1,20 +1,26 @@
-import '../../../../services/todo/models/todo.dart';
+import 'package:next_gen_architecture/services/user_management/models/user.dart';
 
 class HomeState {
-  final List<Todo> todos;
+  final List<User>? users;
   final bool isLoading;
   final String? error;
 
-  const HomeState({required this.todos, required this.isLoading, this.error});
+  static const _unset = Object();
+
+  const HomeState({required this.users, required this.isLoading, this.error});
 
   factory HomeState.initial() =>
-      const HomeState(todos: [], isLoading: true, error: null);
+      const HomeState(users: null, isLoading: true, error: null);
 
-  HomeState copyWith({List<Todo>? todos, bool? isLoading, String? error}) {
+  HomeState copyWith({
+    List<User>? users,
+    bool? isLoading,
+    Object? error = _unset,
+  }) {
     return HomeState(
-      todos: todos ?? this.todos,
+      users: users ?? this.users,
       isLoading: isLoading ?? this.isLoading,
-      error: error,
+      error: error == _unset ? this.error : error as String?,
     );
   }
 }

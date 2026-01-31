@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:next_gen_architecture/pages/home/flows/add_task_flow.dart';
+import 'package:next_gen_architecture/pages/home/widgets/center_info.dart';
+import 'package:next_gen_architecture/pages/home/widgets/create_user_bottom_sheet.dart';
+import 'package:next_gen_architecture/pages/home/widgets/user_list_tile.dart';
 
 import 'view_model/home_view_model.dart';
 
@@ -11,126 +13,42 @@ class HomePage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(homeViewModelProvider);
     final viewModel = ref.read(homeViewModelProvider.notifier);
+    final error = state.error;
+    final users = state.users;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Todo List'),
+        title: Text('Users'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.cleaning_services),
-            onPressed: state.isLoading ? null : viewModel.deleteCompletedTodos,
+            onPressed: state.isLoading ? null : viewModel.refresh,
+            icon: state.isLoading
+                ? CircularProgressIndicator()
+                : Icon(Icons.refresh),
           ),
         ],
       ),
-      body: Column(
-        children: [
-          if (state.error != null)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              color: Theme.of(context).colorScheme.errorContainer,
-              child: Text(
-                state.error!,
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.onErrorContainer,
-                ),
+      body: error != null
+          ? CenterInfo(label: 'Error: $error', icon: Icons.error)
+          : users == null
+          ? CenterInfo(label: 'Loading...', icon: Icons.connected_tv)
+          : users.isEmpty
+          ? CenterInfo(label: 'No users found', icon: Icons.search)
+          : RefreshIndicator.adaptive(
+              onRefresh: viewModel.refresh,
+              child: ListView.builder(
+                itemCount: users.length,
+                itemBuilder: (context, i) => UserListTile(user: users[i]),
               ),
             ),
-          Expanded(
-            child: state.isLoading && state.todos.isEmpty
-                ? const Center(child: CircularProgressIndicator())
-                : state.todos.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.check_circle_outline,
-                          size: 64,
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.onSurface.withAlpha(128),
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'No todos yet',
-                          style: Theme.of(context).textTheme.titleLarge
-                              ?.copyWith(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onSurface.withAlpha(128),
-                              ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Add one using the button below',
-                          style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onSurface.withAlpha(128),
-                              ),
-                        ),
-                      ],
-                    ),
-                  )
-                : ListView.builder(
-                    itemCount: state.todos.length,
-                    itemBuilder: (context, index) {
-                      final todo = state.todos[index];
-                      return Dismissible(
-                        key: Key(todo.id),
-                        direction: DismissDirection.endToStart,
-                        background: Container(
-                          alignment: Alignment.centerRight,
-                          padding: const EdgeInsets.only(right: 16),
-                          color: Theme.of(context).colorScheme.error,
-                          child: Icon(
-                            Icons.delete,
-                            color: Theme.of(context).colorScheme.onError,
-                          ),
-                        ),
-                        onDismissed: (_) => viewModel.deleteTodo(todo.id),
-                        child: ListTile(
-                          leading: Checkbox(
-                            value: todo.isCompleted,
-                            onChanged: state.isLoading
-                                ? null
-                                : (_) => viewModel.toggleTodo(todo.id),
-                          ),
-                          title: Text(
-                            todo.title,
-                            style: TextStyle(
-                              decoration: todo.isCompleted
-                                  ? TextDecoration.lineThrough
-                                  : null,
-                              color: todo.isCompleted
-                                  ? Theme.of(
-                                      context,
-                                    ).colorScheme.onSurface.withAlpha(128)
-                                  : null,
-                            ),
-                          ),
-                          trailing: IconButton(
-                            icon: const Icon(Icons.delete_outline),
-                            onPressed: state.isLoading
-                                ? null
-                                : () => viewModel.deleteTodo(todo.id),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
+      floatingActionButton: Builder(
+        builder: (context) => FloatingActionButton(
+          onPressed: () => showBottomSheet(
+            context: context,
+            builder: (context) => CreateUserBottomSheet(),
           ),
-          if (state.isLoading && state.todos.isNotEmpty)
-            const LinearProgressIndicator(),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: state.isLoading
-            ? null
-            : () => showAddTodoDialog(context, viewModel.addTodo),
-        child: const Icon(Icons.add),
+          child: Icon(Icons.add),
+        ),
       ),
     );
   }

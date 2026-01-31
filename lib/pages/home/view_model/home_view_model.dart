@@ -1,75 +1,67 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:math';
 
-import '../../../services/todo/todo_service.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:next_gen_architecture/services/user_management/models/user.dart';
+import 'package:next_gen_architecture/services/user_management/user_database_service.dart';
+import 'package:next_gen_architecture/services/user_management/users_api_service.dart';
+
 import 'home_state.dart';
 
 final homeViewModelProvider = StateNotifierProvider.autoDispose(
-  (ref) => HomeViewModel(ref.read(todoServiceProvider), HomeState.initial()),
+  (ref) => HomeViewModel(
+    ref.read(usersApiServiceProvider),
+    ref.read(userDatabaseServiceProvider.future),
+    HomeState.initial(),
+  ),
 );
 
 class HomeViewModel extends StateNotifier<HomeState> {
-  final TodoService todoService;
+  final UsersApiService _usersApiService;
+  final Future<UserDatabaseService> _userDatabaseService;
 
-  HomeViewModel(this.todoService, super.state) {
-    _loadTodos();
+  HomeViewModel(this._usersApiService, this._userDatabaseService, super.state) {
+    _loadUsers();
   }
 
-  Future<void> _loadTodos() async {
+  void _loadUsers() async {
     state = state.copyWith(isLoading: true, error: null);
+    final userDatabaseService = await _userDatabaseService;
 
     try {
-      await todoService.load();
-      state = state.copyWith(todos: todoService.todos, isLoading: false);
+      final users = await _usersApiService.getUsers();
+      final localUsers = await userDatabaseService.getLocalUsers();
+      users.insertAll(0, localUsers);
+      state = state.copyWith(isLoading: false, users: users);
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
 
-  Future<void> addTodo(String title) async {
-    if (title.trim().isEmpty) return;
-
-    state = state.copyWith(isLoading: true, error: null);
-
-    try {
-      await todoService.addTodo(title.trim());
-      state = state.copyWith(todos: todoService.todos, isLoading: false);
-    } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
-    }
+  Future<void> refresh() async {
+    _usersApiService.clearCache();
+    _loadUsers();
   }
 
-  Future<void> toggleTodo(String id) async {
-    state = state.copyWith(isLoading: true, error: null);
-
-    try {
-      await todoService.toggleTodo(id);
-      state = state.copyWith(todos: todoService.todos, isLoading: false);
-    } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+  Future<void> createUser(
+    String firstName,
+    String lastName,
+    String email,
+  ) async {
+    final userDatabaseService = await _userDatabaseService;
+    final users = state.users;
+    if (users == null) {
+      throw 'Can not create a new user without having all remote users cached!';
     }
-  }
-
-  Future<void> deleteTodo(String id) async {
-    state = state.copyWith(isLoading: true, error: null);
-
-    try {
-      await todoService.deleteTodo(id);
-      state = state.copyWith(todos: todoService.todos, isLoading: false);
-    } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
-    }
-  }
-
-  Future<void> deleteCompletedTodos() async {
-    state = state.copyWith(isLoading: true, error: null);
-
-    try {
-      for (final todo in state.todos) {
-        if (todo.isCompleted) await todoService.deleteTodo(todo.id);
-      }
-      state = state.copyWith(todos: todoService.todos, isLoading: false);
-    } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
-    }
+    final maxId = users.fold(0, (id, user) => max(id, user.id));
+    await userDatabaseService.createLocalUser(
+      User(
+        id: maxId + 1,
+        firstName: firstName,
+        lastName: lastName,
+        email: email,
+        avatar: null,
+      ),
+    );
+    refresh();
   }
 }
