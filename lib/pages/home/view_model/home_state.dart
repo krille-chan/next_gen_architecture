@@ -9,9 +9,6 @@ class HomeState {
 
   const HomeState({required this.users, required this.isLoading, this.error});
 
-  factory HomeState.initial() =>
-      const HomeState(users: null, isLoading: true, error: null);
-
   HomeState copyWith({
     List<User>? users,
     bool? isLoading,
