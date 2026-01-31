@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import 'package:next_gen_architecture/services/user_management/models/user.dart';
 
 class UserListTile extends StatelessWidget {

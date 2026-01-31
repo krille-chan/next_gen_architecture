@@ -1,22 +1,22 @@
 import 'package:flutter/widgets.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import 'package:next_gen_architecture/pages/home/view_model/home_view_model.dart';
 
-final createUserViewModelProvider = StateNotifierProvider.autoDispose(
-  (ref) => CreateUserViewModel(
-    ref.read(homeViewModelProvider.notifier),
-    AsyncSnapshot.nothing(),
-  ),
+final createUserViewModelProvider = NotifierProvider.autoDispose(
+  CreateUserViewModel.new,
 );
 
-class CreateUserViewModel extends StateNotifier<AsyncSnapshot> {
+class CreateUserViewModel extends Notifier<AsyncSnapshot> {
   final TextEditingController firstNameController = TextEditingController();
   final TextEditingController lastNameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
 
-  final HomeViewModel _homeViewModel;
-
-  CreateUserViewModel(this._homeViewModel, super.state);
+  @override
+  AsyncSnapshot<dynamic> build() {
+    return AsyncSnapshot.nothing();
+  }
 
   Future<void> createUser() async {
     state = AsyncSnapshot.waiting();
@@ -39,11 +39,13 @@ class CreateUserViewModel extends StateNotifier<AsyncSnapshot> {
       return;
     }
 
-    await _homeViewModel.createUser(
-      firstNameController.text,
-      lastNameController.text,
-      emailController.text,
-    );
+    await ref
+        .read(homeViewModelProvider.notifier)
+        .createUser(
+          firstNameController.text,
+          lastNameController.text,
+          emailController.text,
+        );
 
     state = AsyncSnapshot.withData(ConnectionState.done, null);
   }

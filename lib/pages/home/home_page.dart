@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import 'package:next_gen_architecture/pages/home/widgets/center_info.dart';
 import 'package:next_gen_architecture/pages/home/widgets/create_user_bottom_sheet.dart';
 import 'package:next_gen_architecture/pages/home/widgets/user_list_tile.dart';
-
 import 'view_model/home_view_model.dart';
 
 class HomePage extends ConsumerWidget {
