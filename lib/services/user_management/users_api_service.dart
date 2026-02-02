@@ -1,14 +1,8 @@
 import 'dart:convert';
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 
-import 'package:next_gen_architecture/config/app_constants.dart';
 import 'package:next_gen_architecture/services/user_management/models/user.dart';
-
-final usersApiServiceProvider = Provider(
-  (ref) => UsersApiService(baseUri: AppConstants.usersApiBase),
-);
 
 class UsersApiService {
   final Uri baseUri;

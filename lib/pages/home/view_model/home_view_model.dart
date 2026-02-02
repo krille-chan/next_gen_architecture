@@ -1,36 +1,35 @@
 import 'dart:math';
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/widgets.dart';
 
 import 'package:next_gen_architecture/services/user_management/models/user.dart';
 import 'package:next_gen_architecture/services/user_management/user_database_service.dart';
 import 'package:next_gen_architecture/services/user_management/users_api_service.dart';
 import 'home_state.dart';
 
-final homeViewModelProvider = NotifierProvider(HomeViewModel.new);
-
-class HomeViewModel extends Notifier<HomeState> {
-  @override
-  HomeState build() => HomeState(users: null, isLoading: false);
+class HomeViewModel extends ValueNotifier<HomeState> {
+  final UsersApiService _usersApiService;
+  final UserDatabaseService _userDatabaseService;
+  HomeViewModel(this._usersApiService, this._userDatabaseService)
+    : super(HomeState(users: null, isLoading: false)) {
+    _loadUsers();
+  }
 
   void _loadUsers() async {
-    state = state.copyWith(isLoading: true, error: null);
-    final userDatabaseService = await ref.read(
-      userDatabaseServiceProvider.future,
-    );
+    value = value.copyWith(isLoading: true, error: null);
 
     try {
-      final users = await ref.read(usersApiServiceProvider).getUsers();
-      final localUsers = await userDatabaseService.getLocalUsers();
+      final users = await _usersApiService.getUsers();
+      final localUsers = await _userDatabaseService.getLocalUsers();
       users.insertAll(0, localUsers);
-      state = state.copyWith(isLoading: false, users: users);
+      value = value.copyWith(isLoading: false, users: users);
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+      value = value.copyWith(isLoading: false, error: e.toString());
     }
   }
 
   Future<void> refresh() async {
-    ref.read(usersApiServiceProvider).clearCache();
+    _usersApiService.clearCache();
     _loadUsers();
   }
 
@@ -39,15 +38,12 @@ class HomeViewModel extends Notifier<HomeState> {
     String lastName,
     String email,
   ) async {
-    final userDatabaseService = await ref.read(
-      userDatabaseServiceProvider.future,
-    );
-    final users = state.users;
+    final users = value.users;
     if (users == null) {
       throw 'Can not create a new user without having all remote users cached!';
     }
     final maxId = users.fold(0, (id, user) => max(id, user.id));
-    await userDatabaseService.createLocalUser(
+    await _userDatabaseService.createLocalUser(
       User(
         id: maxId + 1,
         firstName: firstName,

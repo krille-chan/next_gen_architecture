@@ -1,11 +1,6 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sqflite/sqflite.dart';
 
 import 'package:next_gen_architecture/services/user_management/models/user.dart';
-
-final userDatabaseServiceProvider = FutureProvider(
-  (ref) => UserDatabaseService.init(),
-);
 
 class UserDatabaseService {
   final Database _database;

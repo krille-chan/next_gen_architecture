@@ -1,30 +1,21 @@
 import 'package:flutter/widgets.dart';
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import 'package:next_gen_architecture/pages/home/view_model/home_view_model.dart';
-
-final createUserViewModelProvider = NotifierProvider.autoDispose(
-  CreateUserViewModel.new,
-);
-
-class CreateUserViewModel extends Notifier<AsyncSnapshot> {
+class CreateUserViewModel extends ValueNotifier<AsyncSnapshot> {
   final TextEditingController firstNameController = TextEditingController();
   final TextEditingController lastNameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
 
-  @override
-  AsyncSnapshot<dynamic> build() {
-    return AsyncSnapshot.nothing();
-  }
+  final Future<void> Function(String, String, String) onCreateUser;
 
-  Future<void> createUser() async {
-    state = AsyncSnapshot.waiting();
+  CreateUserViewModel(this.onCreateUser) : super(AsyncSnapshot.nothing());
+
+  Future<void> createUser({required VoidCallback onClose}) async {
+    value = AsyncSnapshot.waiting();
 
     if (firstNameController.text.isEmpty ||
         lastNameController.text.isEmpty ||
         emailController.text.isEmpty) {
-      state = AsyncSnapshot.withError(
+      value = AsyncSnapshot.withError(
         ConnectionState.none,
         'Please fill out all fields',
       );
@@ -32,21 +23,20 @@ class CreateUserViewModel extends Notifier<AsyncSnapshot> {
     }
 
     if (!emailController.text.contains('@')) {
-      state = AsyncSnapshot.withError(
+      value = AsyncSnapshot.withError(
         ConnectionState.none,
         'Please enter a valid email address',
       );
       return;
     }
 
-    await ref
-        .read(homeViewModelProvider.notifier)
-        .createUser(
-          firstNameController.text,
-          lastNameController.text,
-          emailController.text,
-        );
+    await onCreateUser(
+      firstNameController.text,
+      lastNameController.text,
+      emailController.text,
+    );
 
-    state = AsyncSnapshot.withData(ConnectionState.done, null);
+    value = AsyncSnapshot.withData(ConnectionState.done, null);
+    onClose();
   }
 }
