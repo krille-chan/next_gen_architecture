@@ -13,6 +13,12 @@ class HomeViewModel extends Notifier<HomeState> {
   @override
   HomeState build() => HomeState(users: null, isLoading: false);
 
+  void init() {
+    if (!state.isLoading && state.users == null && state.error == null) {
+      _loadUsers();
+    }
+  }
+
   void _loadUsers() async {
     state = state.copyWith(isLoading: true, error: null);
     final userDatabaseService = await ref.read(

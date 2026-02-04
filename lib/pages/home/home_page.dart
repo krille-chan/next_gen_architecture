@@ -14,6 +14,7 @@ class HomePage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(homeViewModelProvider);
     final viewModel = ref.read(homeViewModelProvider.notifier);
+    WidgetsBinding.instance.addPostFrameCallback((_) => viewModel.init());
     final error = state.error;
     final users = state.users;
 
