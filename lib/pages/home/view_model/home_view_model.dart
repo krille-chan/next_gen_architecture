@@ -11,12 +11,9 @@ final homeViewModelProvider = NotifierProvider(HomeViewModel.new);
 
 class HomeViewModel extends Notifier<HomeState> {
   @override
-  HomeState build() => HomeState(users: null, isLoading: false);
-
-  void init() {
-    if (!state.isLoading && state.users == null && state.error == null) {
-      _loadUsers();
-    }
+  HomeState build() {
+    Future.microtask(_loadUsers);
+    return HomeState(users: null, isLoading: false);
   }
 
   void _loadUsers() async {
