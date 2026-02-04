@@ -1,23 +1,26 @@
 import 'package:next_gen_architecture/services/user_management/models/user.dart';
 
+/// Represents the state of the home page.
+///
+/// This state contains information about the loaded users, the loading status,
+/// and any errors that may have occurred during data fetching.
 class HomeState {
-  final List<User>? users;
-  final bool isLoading;
-  final String? error;
+  /// The list of users to display on the home page.
+  ///
+  /// This is `null` when users haven't been loaded yet, and contains a list
+  /// of [User] objects once they have been successfully fetched from the API
+  /// or local database.
+  List<User>? users;
 
-  static const _unset = Object();
+  /// Indicates whether the users are currently being loaded.
+  ///
+  /// This is `true` while fetching data from the API or database, and `false`
+  /// otherwise.
+  bool isLoading = false;
 
-  const HomeState({required this.users, required this.isLoading, this.error});
-
-  HomeState copyWith({
-    List<User>? users,
-    bool? isLoading,
-    Object? error = _unset,
-  }) {
-    return HomeState(
-      users: users ?? this.users,
-      isLoading: isLoading ?? this.isLoading,
-      error: error == _unset ? this.error : error as String?,
-    );
-  }
+  /// Contains an error message if an error occurred during user loading.
+  ///
+  /// This is `null` when no error has occurred, and contains a descriptive
+  /// error message string if something went wrong during the fetch operation.
+  String? error;
 }

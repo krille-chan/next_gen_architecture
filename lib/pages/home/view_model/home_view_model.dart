@@ -1,23 +1,29 @@
 import 'dart:math';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:next_gen_architecture/pages/home/view_model/home_state.dart';
 
 import 'package:next_gen_architecture/services/user_management/models/user.dart';
 import 'package:next_gen_architecture/services/user_management/user_database_service.dart';
 import 'package:next_gen_architecture/services/user_management/users_api_service.dart';
-import 'home_state.dart';
 
-final homeViewModelProvider = NotifierProvider(HomeViewModel.new);
+final homeViewModelProvider = NotifierProvider.autoDispose(HomeViewModel.new);
 
 class HomeViewModel extends Notifier<HomeState> {
   @override
   HomeState build() {
     Future.microtask(_loadUsers);
-    return HomeState(users: null, isLoading: false);
+    return HomeState();
   }
 
+  @override
+  bool updateShouldNotify(_, _) => true;
+
   void _loadUsers() async {
-    state = state.copyWith(isLoading: true, error: null);
+    state = state
+      ..isLoading = true
+      ..error = null;
+
     final userDatabaseService = await ref.read(
       userDatabaseServiceProvider.future,
     );
@@ -26,9 +32,13 @@ class HomeViewModel extends Notifier<HomeState> {
       final users = await ref.read(usersApiServiceProvider).getUsers();
       final localUsers = await userDatabaseService.getLocalUsers();
       users.insertAll(0, localUsers);
-      state = state.copyWith(isLoading: false, users: users);
+      state = state
+        ..isLoading = false
+        ..users = users;
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+      state = state
+        ..isLoading = false
+        ..error = e.toString();
     }
   }
 
