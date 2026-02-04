@@ -1,31 +1,35 @@
 import 'package:flutter/material.dart';
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import 'package:next_gen_architecture/pages/home/widgets/center_info.dart';
-import 'package:next_gen_architecture/pages/home/widgets/create_user_bottom_sheet.dart';
 import 'package:next_gen_architecture/pages/home/widgets/user_list_tile.dart';
-import 'view_model/home_view_model.dart';
+import '../../../services/user_management/models/user.dart';
 
-class HomePage extends ConsumerWidget {
-  const HomePage({super.key});
+class HomePage extends StatelessWidget {
+  final bool isLoading;
+  final Future<void> Function() refresh;
+  final void Function() onCreateUser;
+  final String? error;
+  final List<User>? users;
+
+  const HomePage({
+    super.key,
+    required this.isLoading,
+    required this.refresh,
+    this.error,
+    this.users,
+    required this.onCreateUser,
+  });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(homeViewModelProvider);
-    final viewModel = ref.read(homeViewModelProvider.notifier);
-    final error = state.error;
-    final users = state.users;
-
+  Widget build(BuildContext context) {
+    final users = this.users;
     return Scaffold(
       appBar: AppBar(
         title: Text('Users'),
         actions: [
           IconButton(
-            onPressed: state.isLoading ? null : viewModel.refresh,
-            icon: state.isLoading
-                ? CircularProgressIndicator()
-                : Icon(Icons.refresh),
+            onPressed: isLoading ? null : refresh,
+            icon: isLoading ? CircularProgressIndicator() : Icon(Icons.refresh),
           ),
         ],
       ),
@@ -36,7 +40,7 @@ class HomePage extends ConsumerWidget {
           : users.isEmpty
           ? CenterInfo(label: 'No users found', icon: Icons.search)
           : RefreshIndicator.adaptive(
-              onRefresh: viewModel.refresh,
+              onRefresh: refresh,
               child: ListView.builder(
                 itemCount: users.length,
                 itemBuilder: (context, i) => UserListTile(user: users[i]),
@@ -44,10 +48,7 @@ class HomePage extends ConsumerWidget {
             ),
       floatingActionButton: Builder(
         builder: (context) => FloatingActionButton(
-          onPressed: () => showBottomSheet(
-            context: context,
-            builder: (context) => CreateUserBottomSheet(),
-          ),
+          onPressed: onCreateUser,
           child: Icon(Icons.add),
         ),
       ),
